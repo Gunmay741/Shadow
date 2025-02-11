@@ -21,11 +21,18 @@ window.addEventListener('load', function () {
     startScreen.style.fontFamily = 'Helvetica, sans-serif';
     startScreen.style.color = 'white';
     startScreen.innerHTML = `
-        <h1>Shadow's Adventure</h1>
+        <h1>Game Title</h1>
         <p>Press 'Enter' to Start</p>
         <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
+        <p id="modeSelectionText">Selected Mode: Easy</p>
     `;
     document.body.appendChild(startScreen);
+
+    // Update the mode display text
+    function updateModeText() {
+        const modeText = document.getElementById('modeSelectionText');
+        modeText.textContent = `Selected Mode: ${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+    }
 
     // Handle keypress for game start and mode selection
     window.addEventListener('keydown', (e) => {
@@ -36,9 +43,11 @@ window.addEventListener('load', function () {
         }
         if (e.key === 'E' || e.key === 'e') {
             gameMode = 'easy'; // Set to easy mode
+            updateModeText(); // Update the displayed mode
         }
         if (e.key === 'H' || e.key === 'h') {
             gameMode = 'hard'; // Set to hard mode
+            updateModeText(); // Update the displayed mode
             generateCoin(); // Generate a coin in hard mode
         }
     });
@@ -217,11 +226,11 @@ window.addEventListener('load', function () {
             width: 30,
             height: 30,
             emoji: '💰', // Coin emoji
-            draw: function(context) {
+            draw: function (context) {
                 context.font = '30px Arial';
                 context.fillText(this.emoji, this.x, this.y);
             },
-            update: function() {
+            update: function () {
                 this.x -= 4; // Move coin leftwards
                 if (this.x < 0) {
                     this.x = canvas.width;
