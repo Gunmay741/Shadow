@@ -19,7 +19,7 @@ window.addEventListener('load', function () {
     startScreen.style.fontFamily = 'Helvetica, sans-serif';
     startScreen.style.color = 'white';
     startScreen.innerHTML = `
-        <h1>Game Title</h1>
+        <h1>Shadow's Adventure</h1>
         <p>Press 'Enter' to Start</p>
     `;
     document.body.appendChild(startScreen);
