@@ -233,11 +233,11 @@ window.addEventListener('load', function () {
         bat = {
             x: canvas.width,
             y: BatY,
-            width: 50,
-            height: 50,
+            width: 60,
+            height: 60,
             emoji: '🐲', // bat emoji
             draw: function (context) {
-                context.font = '50px Arial';
+                context.font = '60px Arial';
                 context.fillText(this.emoji, this.x, this.y);
             },
             update: function () {
