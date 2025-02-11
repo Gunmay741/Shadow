@@ -6,7 +6,9 @@ window.addEventListener('load', function () {
     let enemies = [];
     let score = 0;
     let gameOver = false;
-    let gameStarted = false; // New flag to track if the game has started
+    let gameStarted = false; 
+    let gameMode = 'easy';  // Default to easy mode
+    let coin = null;  // Coin object for hard mode
 
     // Start screen elements
     const startScreen = document.createElement('div');
@@ -21,15 +23,23 @@ window.addEventListener('load', function () {
     startScreen.innerHTML = `
         <h1>Shadow's Adventure</h1>
         <p>Press 'Enter' to Start</p>
+        <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
     `;
     document.body.appendChild(startScreen);
 
-    // Start the game when 'Enter' is pressed
+    // Handle keypress for game start and mode selection
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !gameStarted) {
             gameStarted = true;
             document.body.removeChild(startScreen); // Remove the start screen
             animate(0); // Start the game animation
+        }
+        if (e.key === 'E' || e.key === 'e') {
+            gameMode = 'easy'; // Set to easy mode
+        }
+        if (e.key === 'H' || e.key === 'h') {
+            gameMode = 'hard'; // Set to hard mode
+            generateCoin(); // Generate a coin in hard mode
         }
     });
 
@@ -79,7 +89,7 @@ window.addEventListener('load', function () {
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
         }
         update(input, deltaTime, enemies) {
-            //collision detection
+            //collision detection with enemies
             enemies.forEach(enemy => {
                 const dx = (enemy.x + enemy.width / 2) - (this.x + this.width / 2);
                 const dy = (enemy.y + enemy.height / 2) - (this.y + this.height / 2);
@@ -88,6 +98,18 @@ window.addEventListener('load', function () {
                     gameOver = true;
                 }
             })
+
+            // Coin collision detection in hard mode
+            if (gameMode === 'hard' && coin) {
+                const dx = (coin.x + coin.width / 2) - (this.x + this.width / 2);
+                const dy = (coin.y + coin.height / 2) - (this.y + this.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 10) { // Coin is collected when within 10px radius
+                    score += 2; // Add 2 points for collecting the coin
+                    generateCoin(); // Generate a new coin in a different position
+                }
+            }
+
             //sprite animation
             if (this.frameTimer > this.frameInterval) {
                 if (this.frameX >= this.maxFrame) this.frameX = 0;
@@ -187,6 +209,28 @@ window.addEventListener('load', function () {
         }
     }
 
+    function generateCoin() {
+        const coinY = Math.random() * (canvas.height - 100); // Random height
+        coin = {
+            x: canvas.width,
+            y: coinY,
+            width: 30,
+            height: 30,
+            emoji: '💰', // Coin emoji
+            draw: function(context) {
+                context.font = '30px Arial';
+                context.fillText(this.emoji, this.x, this.y);
+            },
+            update: function() {
+                this.x -= 4; // Move coin leftwards
+                if (this.x < 0) {
+                    this.x = canvas.width;
+                    this.y = Math.random() * (canvas.height - 100); // Randomize the Y position
+                }
+            }
+        };
+    }
+
     function handleEnemies(deltaTime) {
         if (enemyTimer > enemyInterval + randomEnemyInterval) {
             enemies.push(new Enemy(canvas.width, canvas.height))
@@ -213,9 +257,6 @@ window.addEventListener('load', function () {
             context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2, 200);
             context.fillStyle = 'white';
             context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2 + 2, 202);
-            if (kb.presses("space")) {
-                gameOver = false;
-            }
         }
     }
 
@@ -236,6 +277,10 @@ window.addEventListener('load', function () {
         background.update();
         player.draw(ctx);
         player.update(input, deltaTime, enemies);
+        if (gameMode === 'hard' && coin) {
+            coin.update();
+            coin.draw(ctx);
+        }
         handleEnemies(deltaTime);
         displayStatusText(ctx);
         if (!gameOver) requestAnimationFrame(animate);
