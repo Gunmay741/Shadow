@@ -241,7 +241,7 @@ window.addEventListener('load', function () {
                 context.fillText(this.emoji, this.x, this.y);
             },
             update: function () {
-                this.x -= 7; // Move bat leftwards
+                this.x -= 9; // Move bat leftwards
                 if (this.x < 0) {
                     this.x = canvas.width;
                     this.y = Math.random() * (canvas.height - 100); // Randomize the Y position
@@ -265,7 +265,7 @@ window.addEventListener('load', function () {
             generateBat();
             lastBatTime = currentTime; // Reset the timer
         }
-        if (bat) {
+        if (bat && gameMode === 'hard') {
             bat.update();
             bat.draw(ctx);
         }
