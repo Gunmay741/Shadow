@@ -11,7 +11,8 @@ startScreen.style.fontSize = '30px';
 startScreen.style.fontFamily = 'Helvetica, sans-serif';
 startScreen.style.color = 'white';
 startScreen.innerHTML = `
-    <h1>Shadow;s Adventure</h1>
+    <h1>Shadow's Adventure</h1>
+    <h1>All enemies have an invisible aura around them that will end your game!!</h1>
     <p>Press 'Enter' to Start</p>
     <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
     <p id="modeSelectionText">Selected Mode: Easy</p>
