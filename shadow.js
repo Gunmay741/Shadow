@@ -12,7 +12,7 @@ startScreen.style.fontFamily = 'Helvetica, sans-serif';
 startScreen.style.color = 'white';
 startScreen.innerHTML = `
     <h1>Shadow's Adventure</h1>
-    <h4>All enemies have an invisible aura around them that will end your game!!</h4>
+    <h1>All enemies have an invisible aura around them that will end your game!!</h1>
     <h3> You can only press 1 key at a time </h3>
     <p>Press 'Enter' to Start</p>
     <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
