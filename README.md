@@ -1,4 +1,4 @@
-window.addEventListener('load', function(){
+window.addEventListener('load', function () {
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d');
     canvas.width = 800;
@@ -6,16 +6,42 @@ window.addEventListener('load', function(){
     let enemies = [];
     let score = 0;
     let gameOver = false;
+    let gameStarted = false; // New flag to track if the game has started
+
+    // Start screen elements
+    const startScreen = document.createElement('div');
+    startScreen.style.position = 'absolute';
+    startScreen.style.top = '50%';
+    startScreen.style.left = '50%';
+    startScreen.style.transform = 'translate(-50%, -50%)';
+    startScreen.style.textAlign = 'center';
+    startScreen.style.fontSize = '30px';
+    startScreen.style.fontFamily = 'Helvetica, sans-serif';
+    startScreen.style.color = 'white';
+    startScreen.innerHTML = `
+        <h1>Shadow's Adventure</h1>
+        <p>Press 'Enter' to Start</p>
+    `;
+    document.body.appendChild(startScreen);
+
+    // Start the game when 'Enter' is pressed
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !gameStarted) {
+            gameStarted = true;
+            document.body.removeChild(startScreen); // Remove the start screen
+            animate(0); // Start the game animation
+        }
+    });
 
     class InputHandler {
         constructor() {
             this.keys = [];
             window.addEventListener('keydown', e => {
                 if ((e.key === 'ArrowDown' ||
-                     e.key === 'ArrowUp' ||
-                     e.key === 'ArrowLeft' ||
-                     e.key === 'ArrowRight') 
-                     && this.keys.indexOf(e.key) === -1) {
+                    e.key === 'ArrowUp' ||
+                    e.key === 'ArrowLeft' ||
+                    e.key === 'ArrowRight') 
+                    && this.keys.indexOf(e.key) === -1) {
                     this.keys.push(e.key);
                 }
             });
@@ -29,9 +55,9 @@ window.addEventListener('load', function(){
             });
         }
     }
-    
+
     class Player {
-        constructor(gameWidth, gameHeight){
+        constructor(gameWidth, gameHeight) {
             this.gameWidth = gameWidth;
             this.gameHeight = gameHeight;
             this.width = 200;
@@ -44,39 +70,39 @@ window.addEventListener('load', function(){
             this.frameY = 0;
             this.fps = 20;
             this.frameTimer = 0;
-            this.frameInterval = 1000/this.fps;
+            this.frameInterval = 1000 / this.fps;
             this.speed = 0;
             this.vy = 0;
             this.weight = 1;
         }
-        draw(context){
+        draw(context) {
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
         }
-        update(input, deltaTime, enemies){
+        update(input, deltaTime, enemies) {
             //collision detection
             enemies.forEach(enemy => {
-                const dx = (enemy.x + enemy.width/2) - (this.x + this.width/2);
-                const dy = (enemy.y + enemy.height/2) - (this.y + this.height/2);
+                const dx = (enemy.x + enemy.width / 2) - (this.x + this.width / 2);
+                const dy = (enemy.y + enemy.height / 2) - (this.y + this.height / 2);
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < enemy.width/2 + this.width/2){
+                if (distance < enemy.width / 2 + this.width / 2) {
                     gameOver = true;
                 }
             })
             //sprite animation
-            if(this.frameTimer > this.frameInterval){
+            if (this.frameTimer > this.frameInterval) {
                 if (this.frameX >= this.maxFrame) this.frameX = 0;
-                else this.frameX ++;
+                else this.frameX++;
                 this.frameTimer = 0;
             } else {
                 this.frameTimer += deltaTime;
             }
 
             // controls
-            if (input.keys.indexOf('ArrowRight') > -1){
+            if (input.keys.indexOf('ArrowRight') > -1) {
                 this.speed = 5;
-            } else if (input.keys.indexOf('ArrowLeft') > -1){
+            } else if (input.keys.indexOf('ArrowLeft') > -1) {
                 this.speed = -5;
-            }else if (input.keys.indexOf('ArrowUp') > -1 && this.onGround()){
+            } else if (input.keys.indexOf('ArrowUp') > -1 && this.onGround()) {
                 this.vy -= 32;
             } else {
                 this.speed = 0;
@@ -87,7 +113,7 @@ window.addEventListener('load', function(){
             else if (this.x > this.gameWidth - this.width) this.x = this.gameWidth - this.width
             //vertical movement
             this.y += this.vy;
-            if (!this.onGround()){
+            if (!this.onGround()) {
                 this.vy += this.weight;
                 this.maxFrame = 5;
                 this.frameY = 1;
@@ -98,13 +124,13 @@ window.addEventListener('load', function(){
             }
             if (this.y > this.gameHeight - this.height) this.y = this.gameHeight - this.height;
         }
-        onGround(){
+        onGround() {
             return this.y >= this.gameHeight - this.height;
         }
     }
 
     class Background {
-        constructor(gameWidth, gameHeight){
+        constructor(gameWidth, gameHeight) {
             this.gameWidth = gameWidth;
             this.gameHeight = gameHeight;
             this.image = document.getElementById('backgroundImage');
@@ -114,18 +140,18 @@ window.addEventListener('load', function(){
             this.height = 720;
             this.speed = 7;
         }
-        draw(context){
+        draw(context) {
             context.drawImage(this.image, this.x, this.y, this.width, this.height);
             context.drawImage(this.image, this.x + this.width - this.speed, this.y, this.width, this.height);
         }
-        update(){
+        update() {
             this.x -= this.speed;
-            if (this.x < 0 - this.width) this.x =0
+            if (this.x < 0 - this.width) this.x = 0
         }
     }
 
     class Enemy {
-        constructor(gameWidth, gameHeight){
+        constructor(gameWidth, gameHeight) {
             this.gameWidth = gameWidth;
             this.gameHeight = gameHeight;
             this.width = 160;
@@ -137,16 +163,16 @@ window.addEventListener('load', function(){
             this.maxFrame = 5;
             this.fps = 20;
             this.frameTimer = 0;
-            this.frameInterval = 1000/this.fps;
+            this.frameInterval = 1000 / this.fps;
             this.speed = 8;
             this.markedforDeletion = false;
         }
-        draw(context){
+        draw(context) {
             context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.x, this.y, this.width, this.height);
         }
-        update(deltaTime){
-            if (this.frameTimer > this.frameInterval){
-                if(this.frameX >= this.maxFrame) this.frameX = 0;
+        update(deltaTime) {
+            if (this.frameTimer > this.frameInterval) {
+                if (this.frameX >= this.maxFrame) this.frameX = 0;
                 else this.frameX++;
                 this.frameTimer = 0;
             } else {
@@ -156,13 +182,13 @@ window.addEventListener('load', function(){
             if (this.x < 0 - this.width) {
                 this.markedforDeletion = true;
                 score++;
-            } 
-        
+            }
+
         }
     }
 
-    function handleEnemies(deltaTime){
-        if (enemyTimer > enemyInterval + randomEnemyInterval){
+    function handleEnemies(deltaTime) {
+        if (enemyTimer > enemyInterval + randomEnemyInterval) {
             enemies.push(new Enemy(canvas.width, canvas.height))
             enemyTimer = 0;
         } else {
@@ -175,19 +201,19 @@ window.addEventListener('load', function(){
         enemies = enemies.filter(enemy => !enemy.markedforDeletion);
     }
 
-    function displayStatusText(context){
+    function displayStatusText(context) {
         context.font = '40px Helvetica';
         context.fillStyle = 'black';
         context.fillText('Score: ' + score, 20, 50)
         context.fillStyle = 'white';
         context.fillText('Score: ' + score, 22, 52)
-        if(gameOver) {
+        if (gameOver) {
             context.textAlign = 'center';
             context.fillStyle = 'black';
-            context.fillText('Game Over, Ctrl + r To Try Again! ',canvas.width/2, 200);
+            context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2, 200);
             context.fillStyle = 'white';
-            context.fillText('Game Over, Ctrl + r To Try Again! '  ,canvas.width/2 + 2, 202);
-            if (kb.presses("space")){
+            context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2 + 2, 202);
+            if (kb.presses("space")) {
                 gameOver = false;
             }
         }
@@ -202,11 +228,11 @@ window.addEventListener('load', function(){
     let enemyInterval = 1000;
     let randomEnemyInterval = Math.random() * 1000 + 500;
 
-     function animate(timeStamp){
-         const deltaTime = timeStamp - lastTime;
-         lastTime = timeStamp;
-         ctx.clearRect(0, 0, canvas.width, canvas.height);
-         background.draw(ctx);
+    function animate(timeStamp) {
+        const deltaTime = timeStamp - lastTime;
+        lastTime = timeStamp;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        background.draw(ctx);
         background.update();
         player.draw(ctx);
         player.update(input, deltaTime, enemies);
@@ -214,5 +240,5 @@ window.addEventListener('load', function(){
         displayStatusText(ctx);
         if (!gameOver) requestAnimationFrame(animate);
     }
-    animate(0);
+
 });
