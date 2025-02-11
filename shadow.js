@@ -1,286 +1,287 @@
-window.addEventListener('load', function(){
-    const canvas = document.getElementById('canvas1');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 800;
-    canvas.height = 720;
-    let enemies = [];
-    let score = 0;
-    let gameOver = false;
-    let gameMode = 'easy'; // Default to easy mode
-    let coin = null; // Coin object starts as null
+window.addEventListener('load', function () { const canvas = document.getElementById('canvas1'); const ctx = canvas.getContext('2d'); canvas.width = 800; canvas.height = 720; let enemies = []; let score = 0; let gameOver = false; let gameStarted = false; let gameMode = 'easy'; // Default to easy mode let coin = null; // Coin object for hard mode
 
-    class InputHandler {
-        constructor() {
-            this.keys = [];
-            window.addEventListener('keydown', e => {
-                if ((e.key === 'ArrowDown' ||
-                     e.key === 'ArrowUp' ||
-                     e.key === 'ArrowLeft' ||
-                     e.key === 'ArrowRight') 
-                     && this.keys.indexOf(e.key) === -1) {
-                    this.keys.push(e.key);
-                }
-                // Select Easy or Hard mode
-                if (e.key === 'e' || e.key === 'E') {
-                    gameMode = 'easy';
-                    showStartScreen('Easy mode selected');
-                }
-                if (e.key === 'h' || e.key === 'H') {
-                    gameMode = 'hard';
-                    showStartScreen('Hard mode selected');
-                }
-                // Start the game when pressing Enter
-                if (e.key === 'Enter') {
-                    gameStarted = true;
-                    showStartScreen('');
-                }
-            });
-            window.addEventListener('keyup', e => {
-                if (e.key === 'ArrowDown' ||
-                    e.key === 'ArrowUp' ||
-                    e.key === 'ArrowLeft' ||
-                    e.key === 'ArrowRight') {
-                    this.keys.splice(this.keys.indexOf(e.key), 1);
-                }
-            });
-        }
+// Start screen elements
+const startScreen = document.createElement('div');
+startScreen.style.position = 'absolute';
+startScreen.style.top = '50%';
+startScreen.style.left = '50%';
+startScreen.style.transform = 'translate(-50%, -50%)';
+startScreen.style.textAlign = 'center';
+startScreen.style.fontSize = '30px';
+startScreen.style.fontFamily = 'Helvetica, sans-serif';
+startScreen.style.color = 'white';
+startScreen.innerHTML = `
+    <h1>Shadow;s Adventure</h1>
+    <p>Press 'Enter' to Start</p>
+    <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
+    <p id="modeSelectionText">Selected Mode: Easy</p>
+`;
+document.body.appendChild(startScreen);
+
+// Update the mode display text
+function updateModeText() {
+    const modeText = document.getElementById('modeSelectionText');
+    modeText.textContent = `Selected Mode: ${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+}
+
+// Handle keypress for game start and mode selection
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !gameStarted) {
+        gameStarted = true;
+        document.body.removeChild(startScreen); // Remove the start screen
+        animate(0); // Start the game animation
     }
+    if (e.key === 'E' || e.key === 'e') {
+        gameMode = 'easy'; // Set to easy mode
+        updateModeText(); // Update the displayed mode
+    }
+    if (e.key === 'H' || e.key === 'h') {
+        gameMode = 'hard'; // Set to hard mode
+        updateModeText(); // Update the displayed mode
+        generateCoin(); // Generate a coin in hard mode
+    }
+});
 
-    class Player {
-        constructor(gameWidth, gameHeight){
-            this.gameWidth = gameWidth;
-            this.gameHeight = gameHeight;
-            this.width = 200;
-            this.height = 200;
-            this.x = 0;
-            this.y = this.gameHeight - this.height;
-            this.image = document.getElementById('playerImage');
-            this.frameX = 0;
+class InputHandler {
+    constructor() {
+        this.keys = [];
+        window.addEventListener('keydown', e => {
+            if ((e.key === 'ArrowDown' ||
+                e.key === 'ArrowUp' ||
+                e.key === 'ArrowLeft' ||
+                e.key === 'ArrowRight') 
+                && this.keys.indexOf(e.key) === -1) {
+                this.keys.push(e.key);
+            }
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowDown' ||
+                e.key === 'ArrowUp' ||
+                e.key === 'ArrowLeft' ||
+                e.key === 'ArrowRight') {
+                this.keys.splice(this.keys.indexOf(e.key), 1);
+            }
+        });
+    }
+}
+
+class Player {
+    constructor(gameWidth, gameHeight) {
+        this.gameWidth = gameWidth;
+        this.gameHeight = gameHeight;
+        this.width = 200;
+        this.height = 200;
+        this.x = 0;
+        this.y = this.gameHeight - this.height;
+        this.image = document.getElementById('playerImage');
+        this.frameX = 0;
+        this.maxFrame = 8;
+        this.frameY = 0;
+        this.fps = 20;
+        this.frameTimer = 0;
+        this.frameInterval = 1000 / this.fps;
+        this.speed = 0;
+        this.vy = 0;
+        this.weight = 1;
+    }
+    draw(context) {
+        context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
+    }
+    update(input, deltaTime, enemies) {
+        //collision detection with enemies
+        enemies.forEach(enemy => {
+            const dx = (enemy.x + enemy.width / 2) - (this.x + this.width / 2);
+            const dy = (enemy.y + enemy.height / 2) - (this.y + this.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < enemy.width / 2 + this.width / 2) {
+                gameOver = true;
+            }
+        })
+
+        // Coin collision detection in hard mode
+        if (gameMode === 'hard' && coin) {
+            const dx = (coin.x + coin.width / 2) - (this.x + this.width / 2);
+            const dy = (coin.y + coin.height / 2) - (this.y + this.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 100) { // Coin is collected when within 100px radius
+                score += 2; // Add 2 points for collecting the coin
+                generateCoin(); // Generate a new coin in a different position
+            }
+        }
+
+        //sprite animation
+        if (this.frameTimer > this.frameInterval) {
+            if (this.frameX >= this.maxFrame) this.frameX = 0;
+            else this.frameX++;
+            this.frameTimer = 0;
+        } else {
+            this.frameTimer += deltaTime;
+        }
+
+        // controls
+        if (input.keys.indexOf('ArrowRight') > -1) {
+            this.speed = 5;
+        } else if (input.keys.indexOf('ArrowLeft') > -1) {
+            this.speed = -5;
+        } else if (input.keys.indexOf('ArrowUp') > -1 && this.onGround()) {
+            this.vy -= 32;
+        } else {
+            this.speed = 0;
+        }
+        //horizontal movement
+        this.x += this.speed;
+        if (this.x < 0) this.x = 0;
+        else if (this.x > this.gameWidth - this.width) this.x = this.gameWidth - this.width
+        //vertical movement
+        this.y += this.vy;
+        if (!this.onGround()) {
+            this.vy += this.weight;
+            this.maxFrame = 5;
+            this.frameY = 1;
+        } else {
+            this.vy = 0;
             this.maxFrame = 8;
             this.frameY = 0;
-            this.fps = 20;
+        }
+        if (this.y > this.gameHeight - this.height) this.y = this.gameHeight - this.height;
+    }
+    onGround() {
+        return this.y >= this.gameHeight - this.height;
+    }
+}
+
+class Background {
+    constructor(gameWidth, gameHeight) {
+        this.gameWidth = gameWidth;
+        this.gameHeight = gameHeight;
+        this.image = document.getElementById('backgroundImage');
+        this.x = 0;
+        this.y = 0;
+        this.width = 2400;
+        this.height = 720;
+        this.speed = 7;
+    }
+    draw(context) {
+        context.drawImage(this.image, this.x, this.y, this.width, this.height);
+        context.drawImage(this.image, this.x + this.width - this.speed, this.y, this.width, this.height);
+    }
+    update() {
+        this.x -= this.speed;
+        if (this.x < 0 - this.width) this.x = 0
+    }
+}
+
+class Enemy {
+    constructor(gameWidth, gameHeight) {
+        this.gameWidth = gameWidth;
+        this.gameHeight = gameHeight;
+        this.width = 160;
+        this.height = 119;
+        this.image = document.getElementById('enemyImage');
+        this.x = this.gameWidth;
+        this.y = this.gameHeight - this.height;
+        this.frameX = 0;
+        this.maxFrame = 5;
+        this.fps = 20;
+        this.frameTimer = 0;
+        this.frameInterval = 1000 / this.fps;
+        this.speed = 8;
+        this.markedforDeletion = false;
+    }
+    draw(context) {
+        context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.x, this.y, this.width, this.height);
+    }
+    update(deltaTime) {
+        if (this.frameTimer > this.frameInterval) {
+            if (this.frameX >= this.maxFrame) this.frameX = 0;
+            else this.frameX++;
             this.frameTimer = 0;
-            this.frameInterval = 1000/this.fps;
-            this.speed = 0;
-            this.vy = 0;
-            this.weight = 1;
-        }
-        draw(context){
-            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
-        }
-        update(input, deltaTime, enemies){
-            // Collision detection with enemies
-            enemies.forEach(enemy => {
-                const dx = (enemy.x + enemy.width/2) - (this.x + this.width/2);
-                const dy = (enemy.y + enemy.height/2) - (this.y + this.height/2);
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < enemy.width/2 + this.width/2){
-                    gameOver = true;
-                }
-            })
-            // Sprite animation
-            if(this.frameTimer > this.frameInterval){
-                if (this.frameX >= this.maxFrame) this.frameX = 0;
-                else this.frameX ++;
-                this.frameTimer = 0;
-            } else {
-                this.frameTimer += deltaTime;
-            }
-
-            // Controls
-            if (input.keys.indexOf('ArrowRight') > -1){
-                this.speed = 5;
-            } else if (input.keys.indexOf('ArrowLeft') > -1){
-                this.speed = -5;
-            }else if (input.keys.indexOf('ArrowUp') > -1 && this.onGround()){
-                this.vy -= 32;
-            } else {
-                this.speed = 0;
-            }
-            // Horizontal movement
-            this.x += this.speed;
-            if (this.x < 0) this.x = 0;
-            else if (this.x > this.gameWidth - this.width) this.x = this.gameWidth - this.width
-            // Vertical movement
-            this.y += this.vy;
-            if (!this.onGround()){
-                this.vy += this.weight;
-                this.maxFrame = 5;
-                this.frameY = 1;
-            } else {
-                this.vy = 0;
-                this.maxFrame = 8;
-                this.frameY = 0;
-            }
-            if (this.y > this.gameHeight - this.height) this.y = this.gameHeight - this.height;
-        }
-        onGround(){
-            return this.y >= this.gameHeight - this.height;
-        }
-    }
-
-    class Background {
-        constructor(gameWidth, gameHeight){
-            this.gameWidth = gameWidth;
-            this.gameHeight = gameHeight;
-            this.image = document.getElementById('backgroundImage');
-            this.x = 0;
-            this.y = 0;
-            this.width = 2400;
-            this.height = 720;
-            this.speed = 7;
-        }
-        draw(context){
-            context.drawImage(this.image, this.x, this.y, this.width, this.height);
-            context.drawImage(this.image, this.x + this.width - this.speed, this.y, this.width, this.height);
-        }
-        update(){
-            this.x -= this.speed;
-            if (this.x < 0 - this.width) this.x = 0;
-        }
-    }
-
-    class Enemy {
-        constructor(gameWidth, gameHeight){
-            this.gameWidth = gameWidth;
-            this.gameHeight = gameHeight;
-            this.width = 160;
-            this.height = 119;
-            this.image = document.getElementById('enemyImage');
-            this.x = this.gameWidth;
-            this.y = this.gameHeight - this.height;
-            this.frameX = 0;
-            this.maxFrame = 5;
-            this.fps = 20;
-            this.frameTimer = 0;
-            this.frameInterval = 1000/this.fps;
-            this.speed = 8;
-            this.markedforDeletion = false;
-        }
-        draw(context){
-            context.drawImage(this.image, this.frameX * this.width, 0, this.width, this.height, this.x, this.y, this.width, this.height);
-        }
-        update(deltaTime){
-            if (this.frameTimer > this.frameInterval){
-                if(this.frameX >= this.maxFrame) this.frameX = 0;
-                else this.frameX++;
-                this.frameTimer = 0;
-            } else {
-                this.frameTimer += deltaTime;
-            }
-            this.x -= this.speed;
-            if (this.x < 0 - this.width) {
-                this.markedforDeletion = true;
-                score++;
-            }
-        }
-    }
-
-    class Coin {
-        constructor(gameWidth, gameHeight){
-            this.gameWidth = gameWidth;
-            this.gameHeight = gameHeight;
-            this.width = 50;
-            this.height = 50;
-            this.x = Math.random() * (this.gameWidth - this.width);
-            this.y = Math.random() * (this.gameHeight - this.height - 100); // Coin stays above the ground
-            this.image = document.getElementById('coinImage');
-        }
-        draw(context){
-            context.drawImage(this.image, this.x, this.y, this.width, this.height);
-        }
-        update(){
-            // Randomly move the coin within the game bounds
-            this.x = Math.random() * (this.gameWidth - this.width);
-            this.y = Math.random() * (this.gameHeight - this.height - 100);
-        }
-    }
-
-    function handleEnemies(deltaTime){
-        if (enemyTimer > enemyInterval + randomEnemyInterval){
-            enemies.push(new Enemy(canvas.width, canvas.height))
-            enemyTimer = 0;
         } else {
-            enemyTimer += deltaTime;
+            this.frameTimer += deltaTime;
         }
-        enemies.forEach(enemy => {
-            enemy.draw(ctx);
-            enemy.update(deltaTime);
-        });
-        enemies = enemies.filter(enemy => !enemy.markedforDeletion);
-    }
+        this.x -= this.speed;
+        if (this.x < 0 - this.width) {
+            this.markedforDeletion = true;
+            score++;
+        }
 
-    function generateCoin(){
-        coin = new Coin(canvas.width, canvas.height);
     }
+}
 
-    function displayStatusText(context){
-        context.font = '40px Helvetica';
+function generateCoin() {
+    const coinY = Math.random() * (canvas.height - 100); // Random height
+    coin = {
+        x: canvas.width,
+        y: coinY,
+        width: 30,
+        height: 30,
+        emoji: '💰', // Coin emoji
+        draw: function (context) {
+            context.font = '30px Arial';
+            context.fillText(this.emoji, this.x, this.y);
+        },
+        update: function () {
+            this.x -= 4; // Move coin leftwards
+            if (this.x < 0) {
+                this.x = canvas.width;
+                this.y = Math.random() * (canvas.height - 100); // Randomize the Y position
+            }
+        }
+    };
+}
+
+function handleEnemies(deltaTime) {
+    if (enemyTimer > enemyInterval + randomEnemyInterval) {
+        enemies.push(new Enemy(canvas.width, canvas.height))
+        enemyTimer = 0;
+    } else {
+        enemyTimer += deltaTime;
+    }
+    enemies.forEach(enemy => {
+        enemy.draw(ctx);
+        enemy.update(deltaTime);
+    });
+    enemies = enemies.filter(enemy => !enemy.markedforDeletion);
+}
+
+function displayStatusText(context) {
+    context.font = '40px Helvetica';
+    context.fillStyle = 'black';
+    context.fillText('Score: ' + score, 20, 50)
+    context.fillStyle = 'white';
+    context.fillText('Score: ' + score, 22, 52)
+    if (gameOver) {
+        context.textAlign = 'center';
         context.fillStyle = 'black';
-        context.fillText('Score: ' + score, 20, 50);
+        context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2, 200);
         context.fillStyle = 'white';
-        context.fillText('Score: ' + score, 22, 52);
-        if(gameOver) {
-            context.textAlign = 'center';
-            context.fillStyle = 'black';
-            context.fillText('Game Over, Ctrl + r To Try Again! ',canvas.width/2, 200);
-            context.fillStyle = 'white';
-            context.fillText('Game Over, Ctrl + r To Try Again! '  ,canvas.width/2 + 2, 202);
-        }
-        if (gameMode === 'easy') {
-            context.fillStyle = 'black';
-            context.fillText('Easy Mode Selected', canvas.width / 2, canvas.height / 2);
-            context.fillStyle = 'white';
-            context.fillText('Easy Mode Selected', canvas.width / 2 + 2, canvas.height / 2 + 2);
-        } else if (gameMode === 'hard') {
-            context.fillStyle = 'black';
-            context.fillText('Hard Mode Selected', canvas.width / 2, canvas.height / 2);
-            context.fillStyle = 'white';
-            context.fillText('Hard Mode Selected', canvas.width / 2 + 2, canvas.height / 2 + 2);
-        }
+        context.fillText('Game Over, Ctrl + r To Try Again! ', canvas.width / 2 + 2, 202);
     }
+}
 
-    function showStartScreen(message) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '50px Helvetica';
-        ctx.fillStyle = 'black';
-        ctx.textAlign = 'center';
-        ctx.fillText("Shadow's Adventure", canvas.width / 2, 100); // Title at the top
-        ctx.font = '30px Helvetica';
-        ctx.fillStyle = 'black';
-        ctx.fillText('Press Enter to Start', canvas.width / 2, canvas.height / 2 - 50);
-        ctx.fillText('Press E for Easy, H for Hard Mode', canvas.width / 2, canvas.height / 2);
-        if (message) {
-            ctx.fillText(message, canvas.width / 2, canvas.height / 2 + 50);
-        }
+const input = new InputHandler();
+const player = new Player(canvas.width, canvas.height);
+const background = new Background(canvas.width, canvas.height);
+
+let lastTime = 0;
+let enemyTimer = 0;
+let enemyInterval = 1000;
+let randomEnemyInterval = Math.random() * 1000 + 500;
+
+function animate(timeStamp) {
+    const deltaTime = timeStamp - lastTime;
+    lastTime = timeStamp;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    background.draw(ctx);
+    background.update();
+    player.draw(ctx);
+    player.update(input, deltaTime, enemies);
+    if (gameMode === 'hard' && coin) {
+        coin.update();
+        coin.draw(ctx);
     }
-
-    const input = new InputHandler();
-    const player = new Player(canvas.width, canvas.height);
-    const background = new Background(canvas.width, canvas.height);
-
-    let lastTime = 0;
-    let enemyTimer = 0;
-    let enemyInterval = 1000;
-    let randomEnemyInterval = Math.random() * 1000 + 500;
-    let gameStarted = false;
-
-    function animate(timeStamp){
-        const deltaTime = timeStamp - lastTime;
-        lastTime = timeStamp;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        background.draw(ctx);
-        background.update();
-        player.draw(ctx);
-        player.update(input, deltaTime, enemies);
-        if (gameMode === 'hard' && coin) {
-            coin.update();
-            coin.draw(ctx);
-        }
-        handleEnemies(deltaTime);
-        displayStatusText(ctx);
-        if (!gameOver) requestAnimationFrame(animate);
-    }
-
-    showStartScreen('Press Enter to Start');
+    handleEnemies(deltaTime);
+    displayStatusText(ctx);
+    if (!gameOver) requestAnimationFrame(animate);
+}
 });
