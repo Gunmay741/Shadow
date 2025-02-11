@@ -235,7 +235,7 @@ window.addEventListener('load', function () {
             y: BatY,
             width: 50,
             height: 50,
-            emoji: '🦇', // bat emoji
+            emoji: '👹', // bat emoji
             draw: function (context) {
                 context.font = '50px Arial';
                 context.fillText(this.emoji, this.x, this.y);
