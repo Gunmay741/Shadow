@@ -21,12 +21,12 @@ window.addEventListener('load', function () {
     startScreen.style.fontFamily = 'Helvetica, sans-serif';
     startScreen.style.color = 'white';
     startScreen.innerHTML = `
-        <h1>Shadow's Adventure</h1>
-        <h3>All enemies have an invisible aura</h3>
-        <h3>  around them that will end your game!! </h3>
-        <h3> You can only press 1 key at a time </h3>
-        <p>Press 'Enter' to Start</p>
-        <p>Press 'E' for Easy Mode, 'H' for Hard Mode</p>
+        <h1>Shadow's Aventure</h1>
+        <h3>Tous les ennemis ont une aura invisible</h3>
+        <h3>autour d'eux qui mettra fin à votre jeu !! </h3>
+        <h3> Vous ne pouvez appuyer que sur une seule touche à la fois </h3>
+        <p>Appuyez sur « Entrée » pour démarrer</p>
+        <p>Appuyez sur « E » pour le mode facile, « H » pour le mode difficile</p>
         <p id="modeSelectionText">Selected Mode: Easy</p>
     `;
     document.body.appendChild(startScreen);
