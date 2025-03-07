@@ -22,7 +22,7 @@ window.addEventListener('load', function () {
     startScreen.style.color = 'white';
     startScreen.innerHTML = `
         <h1>Shadow's Adventure</h1>
-        <h3>TAll the enemies have an invisible aura</h3>
+        <h3>All the enemies have an invisible aura</h3>
         <h3>that will end your game </h3>
         <h3> Use arrow keys to move </h3>
         <p>Press enter to start</p>
